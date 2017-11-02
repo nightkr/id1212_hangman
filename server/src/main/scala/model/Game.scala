@@ -8,11 +8,22 @@ class Game(word: String) {
   private var triedLetters = Set[Char]()
 
   def tryLetter(letter: Char): Unit = {
-    if (!triedLetters.contains(letter) && triesRemaining > 0) {
+    if (triesRemaining > 0 && !triedLetters.contains(letter) && isLetter(letter)) {
       triedLetters += letter
-      triesRemaining -= 1
+      if (!word.contains(letter)) {
+        triesRemaining -= 1
+      }
     }
   }
 
-  def toGameStatePacket: Packet.GameState = Packet.GameState(triesRemaining, triedLetters, word)
+  def isLetter(chr: Char) = chr >= 'a' && chr <= 'z'
+  def clue: String = word.map {
+    case chr if isLetter(chr) && !triedLetters.contains(chr) => '_'
+    case chr => chr
+  }
+
+  def isSolved = clue == word
+  def gameOver = triedLetters == 0
+
+  def toGameStatePacket: Packet.GameState = Packet.GameState(triesRemaining, triedLetters, clue)
 }
