@@ -45,6 +45,9 @@ class PacketReader(stream: InputStream) {
 
   private def readFrame(): InputStream = {
     val length = readInt(stream)
+    if (length > 5000) {
+      throw new InvalidPacketException(s"Frame is too long: $length > 5000")
+    }
     val buf = new Array[Byte](length)
     readToBuf(stream, buf)
     new ByteArrayInputStream(buf)
