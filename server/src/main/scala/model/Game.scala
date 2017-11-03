@@ -17,11 +17,8 @@ class Game(word: String) {
   }
 
   def isLetter(chr: Char) = chr >= 'a' && chr <= 'z'
-  def clue: String = word.map {
-    case chr if isLetter(chr) && !triedLetters.contains(chr) => '_'
-    case chr => chr
-  }
+  def clue: Seq[Option[Char]] = word.map(Some(_).filter(char => !isLetter(char) || triedLetters.contains(char)))
 
-  def isSolved = clue == word
+  def isSolved = clue == word.map(Some(_))
   def gameOver = triesRemaining == 0 || isSolved
 }

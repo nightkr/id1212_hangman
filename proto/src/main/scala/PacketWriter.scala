@@ -23,8 +23,8 @@ class PacketWriter(stream: OutputStream) {
     os.write(buf)
   }
 
-  private def writeString(os: OutputStream, value: String): Unit = {
-    writeInt(os, value.length())
+  private def writeString(os: OutputStream, value: Seq[Char]): Unit = {
+    writeInt(os, value.length)
     value.foreach(writeChar(os, _))
   }
 
@@ -38,7 +38,7 @@ class PacketWriter(stream: OutputStream) {
         writeInt(frame, Packet.Types.GAME_STATE)
         writeInt(frame, pkt.triesRemaining)
         writeString(frame, pkt.triedLetters.mkString)
-        writeString(frame, pkt.clue)
+        writeString(frame, pkt.clue.map(_.getOrElse('\u0000')))
       case pkt: Packet.GameOver =>
         writeInt(frame, Packet.Types.GAME_OVER)
         writeBoolean(frame, pkt.win)

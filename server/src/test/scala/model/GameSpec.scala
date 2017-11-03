@@ -30,9 +30,9 @@ class GameSpec extends WordSpec with Matchers {
 
       "reveal the letter in the clue" in {
         val game = new Game("asa")
-        game.clue shouldEqual "___"
+        game.clue shouldEqual Seq(None, None, None)
         game.tryLetter('a')
-        game.clue shouldEqual "a_a"
+        game.clue shouldEqual Seq(Some('a'), None, Some('a'))
       }
     }
 

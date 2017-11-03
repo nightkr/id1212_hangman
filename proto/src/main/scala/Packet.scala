@@ -11,7 +11,7 @@ object Packet {
   }
 
   case class TryLetter(letter: Char) extends Packet
-  case class GameState(triesRemaining: Int, triedLetters: Set[Char], clue: String) extends Packet
+  case class GameState(triesRemaining: Int, triedLetters: Set[Char], clue: Seq[Option[Char]]) extends Packet
   case class GameOver(win: Boolean) extends Packet
 }
 

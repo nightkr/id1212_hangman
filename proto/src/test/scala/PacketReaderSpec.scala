@@ -49,7 +49,7 @@ class PacketReaderSpec extends WordSpec with Matchers with PropertyChecks {
           0, 0, 0, 6,  // Clue length
           'q'.toByte, 'w'.toByte, 'e'.toByte, 'r'.toByte, 't'.toByte, 'y'.toByte
         )
-        reader.readNext() shouldEqual Packet.GameState(5, Set('g', 'h'), "qwerty")
+        reader.readNext() shouldEqual Packet.GameState(5, Set('g', 'h'), "qwerty".map(Some(_)))
       }
     }
   }
@@ -62,7 +62,7 @@ class PacketReaderSpec extends WordSpec with Matchers with PropertyChecks {
       val genPacketGameState: Gen[Packet.GameState] = for {
         triesLeft <- Gen.choose(0, 500)
         triedChars <- Gen.listOf(Gen.alphaLowerChar)
-        clue <- Gen.alphaNumStr
+        clue <- Gen.listOf(Gen.option(Gen.alphaNumChar))
       } yield Packet.GameState(triesLeft, triedChars.toSet, clue)
       val genPacketGameOver: Gen[Packet.GameOver] = for {
         win <- Gen.oneOf(false, true)
