@@ -1,4 +1,4 @@
-package se.nullable.kth.id1212.hangman.client
+package se.nullable.kth.id1212.hangman.dumb_client
 
 import java.io.{ BufferedReader, Reader }
 import java.net.Socket

@@ -11,6 +11,6 @@ lazy val proto = project.settings(sharedSettings: _*)
 
 lazy val server = project.settings(sharedSettings: _*).dependsOn(proto)
 
-lazy val client = project.settings(sharedSettings: _*).dependsOn(proto)
+lazy val dumb_client = project.settings(sharedSettings: _*).dependsOn(proto)
 
-lazy val root = project.in(file(".")).aggregate(proto, server, client)
+lazy val root = project.in(file(".")).aggregate(proto, server, dumb_client)
