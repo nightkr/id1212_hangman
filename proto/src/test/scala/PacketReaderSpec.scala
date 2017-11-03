@@ -64,8 +64,11 @@ class PacketReaderSpec extends WordSpec with Matchers with PropertyChecks {
         triedChars <- Gen.listOf(Gen.alphaLowerChar)
         clue <- Gen.alphaNumStr
       } yield Packet.GameState(triesLeft, triedChars.toSet, clue)
+      val genPacketGameOver: Gen[Packet.GameOver] = for {
+        win <- Gen.oneOf(false, true)
+      } yield Packet.GameOver(win)
 
-      implicit val genPacket: Arbitrary[Packet] = Arbitrary(Gen.oneOf(genPacketTryLetter, genPacketGameState))
+      implicit val genPacket: Arbitrary[Packet] = Arbitrary(Gen.oneOf(genPacketTryLetter, genPacketGameState, genPacketGameOver))
 
       "give back the same value" in {
         forAll { packet: Packet =>

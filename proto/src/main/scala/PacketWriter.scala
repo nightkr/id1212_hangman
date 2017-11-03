@@ -12,6 +12,11 @@ class PacketWriter(stream: OutputStream) {
     os.write(buf)
   }
 
+  private def writeBoolean(os: OutputStream, value: Boolean): Unit = {
+    val buf = Array[Byte](if (value) 1 else 0)
+    os.write(buf)
+  }
+
   private def writeChar(os: OutputStream, value: Char): Unit = {
     val buf = Array(value.toByte)
     os.write(buf)
@@ -33,8 +38,12 @@ class PacketWriter(stream: OutputStream) {
         writeInt(frame, pkt.triesRemaining)
         writeString(frame, pkt.triedLetters.mkString)
         writeString(frame, pkt.clue)
+      case pkt: Packet.GameOver =>
+        writeInt(frame, Packet.Types.GAME_OVER)
+        writeBoolean(frame, pkt.win)
     }
     writeInt(stream, frame.size())
     frame.writeTo(stream)
+    stream.flush()
   }
 }

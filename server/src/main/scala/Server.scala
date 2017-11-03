@@ -7,9 +7,11 @@ class Server {
   def run(): Unit = {
     val listener = new Listener
     listener.start()
-    println("Listening...")
-    StdIn.readLine()
-    listener.close()
+    try {
+      println("Listening...")
+      StdIn.readLine()
+      listener.close()
+    }
   }
 }
 

@@ -21,15 +21,36 @@ class Listener extends Closeable {
 
   override def close(): Unit = {
     stop.set(true)
-    thread.foreach(_.join())
+    thread.foreach { t =>
+      new Socket("localhost", 2729).close() // Interrupt the accept loop
+      t.join()
+    }
+    thread = None
     stop.set(false)
   }
 }
 
 class ListenerThread(server: ServerSocket, stopRequest: AtomicBoolean) extends Thread {
+  setDaemon(true)
+
   override def run(): Unit = {
-    while (!stopRequest.get) {
-      val socket = server.accept()
+    try {
+      while (!stopRequest.get) {
+        val socket = server.accept()
+        val conn = new ConnectionThread(socket)
+        conn.start()
+      }
+    } finally {
+      server.close()
+    }
+  }
+}
+
+class ConnectionThread(socket: Socket) extends Thread {
+  setDaemon(true)
+
+  override def run(): Unit = {
+    try {
       val reader = new PacketReader(socket.getInputStream)
       val writer = new PacketWriter(socket.getOutputStream)
       val ctrl = new GameController(writer.write, () => socket.close())
@@ -40,10 +61,10 @@ class ListenerThread(server: ServerSocket, stopRequest: AtomicBoolean) extends T
         }
       } catch {
         case _: EOFException =>
-          socket.close()
         case _: SocketException =>
       }
+    } finally {
+      socket.close()
     }
-    server.close()
   }
 }

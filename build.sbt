@@ -3,7 +3,6 @@ lazy val sharedSettings = Seq(
     "org.scalatest" %% "scalatest" % "3.0.4" % "test",
     "org.scalacheck" %% "scalacheck" % "1.13.4" % "test"
   ),
-  fork in run := true,
   connectInput in run := true,
   cancelable in Global := true
 )

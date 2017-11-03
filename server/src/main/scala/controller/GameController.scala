@@ -20,6 +20,7 @@ class GameController(sendPacket: Packet => Unit, close: () => Unit) {
     game.tryLetter(letter)
     sendPacket(game.toGameStatePacket)
     if (game.isSolved || game.gameOver) {
+      sendPacket(Packet.GameOver(game.isSolved))
       close()
     }
   }

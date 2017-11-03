@@ -32,6 +32,13 @@ class PacketReader(stream: InputStream) {
     value
   }
 
+  private def readBoolean(is: InputStream): Boolean =
+    readByte(is) match {
+      case 0 => false
+      case 1 => true
+      case v => throw new InvalidPacketException(s"$v is not a boolean value")
+    }
+
   private def readChar(is: InputStream): Char = readByte(is).toChar
 
   private def readString(is: InputStream): String = {
@@ -60,12 +67,15 @@ class PacketReader(stream: InputStream) {
       typeCode match {
         case Packet.Types.TRY_LETTER =>
           val character = readChar(frame)
-          return Packet.TryLetter(character)
+          Packet.TryLetter(character)
         case Packet.Types.GAME_STATE =>
           val triesLeft = readInt(frame)
           val triedChars = readString(frame)
           val clue = readString(frame)
-          return Packet.GameState(triesLeft, triedChars.toSet, clue)
+          Packet.GameState(triesLeft, triedChars.toSet, clue)
+        case Packet.Types.GAME_OVER =>
+          val win = readBoolean(frame)
+          Packet.GameOver(win)
         case _ =>
           throw new InvalidPacketException("Unknown packet type")
       }

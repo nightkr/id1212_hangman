@@ -23,7 +23,7 @@ class Game(word: String) {
   }
 
   def isSolved = clue == word
-  def gameOver = triedLetters == 0
+  def gameOver = triesRemaining == 0
 
   def toGameStatePacket: Packet.GameState = Packet.GameState(triesRemaining, triedLetters, clue)
 }
