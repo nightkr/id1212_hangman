@@ -2,18 +2,16 @@ package se.nullable.kth.id1212.hangman.client.view
 
 import javafx.application.Platform
 import javafx.beans.binding.{Bindings, StringExpression}
-import javafx.beans.property.{ BooleanProperty, IntegerProperty, SimpleBooleanProperty, SimpleIntegerProperty, SimpleStringProperty, StringProperty }
+import javafx.beans.property.{BooleanProperty, IntegerProperty, SimpleBooleanProperty, SimpleIntegerProperty, SimpleStringProperty, StringProperty}
 import javafx.fxml.FXML
 import javafx.scene.Node
-import javafx.scene.control.{ Dialog, Label }
+import javafx.scene.control.Label
 import javafx.scene.layout.Pane
 import javafx.scene.shape.SVGPath
-import javafx.stage.Stage
 import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.xpath.XPathFactory
-import se.nullable.kth.id1212.hangman.client.controller.ClientController
+import se.nullable.kth.id1212.hangman.client.controller.{ClientController, UpdateListener}
 import se.nullable.kth.id1212.hangman.proto.Packet
-import se.nullable.kth.id1212.hangman.client.controller.UpdateListener
 
 class ViewController(controller: ClientController) {
   @FXML

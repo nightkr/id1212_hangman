@@ -1,5 +1,6 @@
 package se.nullable.kth.id1212.hangman.client.net
 
+import java.io.EOFException
 import java.net.{ InetSocketAddress, Socket }
 import se.nullable.kth.id1212.hangman.proto.{ Packet, PacketReader, PacketWriter }
 
@@ -27,8 +28,13 @@ class ReaderThread(reader: PacketReader, listener: Packet => Unit) extends Threa
   setDaemon(true)
 
   override def run(): Unit = {
-    while(true) {
-      listener(reader.readNext())
+    try {
+      while(true) {
+        listener(reader.readNext())
+      }
+    } catch {
+      case _: EOFException =>
+        // Game over, terminate loop
     }
   }
 }

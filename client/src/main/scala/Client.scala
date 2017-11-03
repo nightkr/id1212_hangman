@@ -21,6 +21,7 @@ class Client extends Application {
     val content: Parent = fxml.load()
     val scene = new Scene(content)
     stage.setScene(scene)
+    stage.setTitle("NetHangman")
     stage.show()
 
     stage.setOnCloseRequest(ev => controller.stop())
