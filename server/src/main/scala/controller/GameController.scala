@@ -18,10 +18,12 @@ class GameController(sendPacket: Packet => Unit, close: () => Unit) {
 
   private def tryLetter(letter: Char): Unit = {
     game.tryLetter(letter)
-    sendPacket(game.toGameStatePacket)
-    if (game.isSolved || game.gameOver) {
+    sendPacket(gameStatePacket)
+    if (game.gameOver) {
       sendPacket(Packet.GameOver(game.isSolved))
       close()
     }
   }
+
+  private def gameStatePacket = Packet.GameState(game.triesRemaining, game.triedLetters, game.clue)
 }

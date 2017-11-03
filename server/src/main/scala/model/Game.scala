@@ -1,17 +1,17 @@
 package se.nullable.kth.id1212.hangman.server.model
 
-import se.nullable.kth.id1212.hangman.proto.Packet
-
-
 class Game(word: String) {
-  private var triesRemaining = 15
-  private var triedLetters = Set[Char]()
+  private var _triesRemaining = 5
+  private var _triedLetters = Set[Char]()
+
+  def triesRemaining = _triesRemaining
+  def triedLetters = _triedLetters
 
   def tryLetter(letter: Char): Unit = {
-    if (triesRemaining > 0 && !triedLetters.contains(letter) && isLetter(letter)) {
-      triedLetters += letter
+    if (!gameOver && !triedLetters.contains(letter) && isLetter(letter)) {
+      _triedLetters += letter
       if (!word.contains(letter)) {
-        triesRemaining -= 1
+        _triesRemaining -= 1
       }
     }
   }
@@ -23,7 +23,5 @@ class Game(word: String) {
   }
 
   def isSolved = clue == word
-  def gameOver = triesRemaining == 0
-
-  def toGameStatePacket: Packet.GameState = Packet.GameState(triesRemaining, triedLetters, clue)
+  def gameOver = triesRemaining == 0 || isSolved
 }
