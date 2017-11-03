@@ -3,6 +3,7 @@ package se.nullable.kth.id1212.hangman.server.net
 import java.io.{Closeable, EOFException}
 import java.net.{ServerSocket, Socket, SocketException}
 import java.util.concurrent.atomic.AtomicBoolean
+import org.slf4j.LoggerFactory
 
 import se.nullable.kth.id1212.hangman.proto.{PacketReader, PacketWriter}
 import se.nullable.kth.id1212.hangman.server.model.controller.GameController
@@ -34,10 +35,13 @@ class Listener extends Closeable {
 class ListenerThread(server: ServerSocket, stopRequest: AtomicBoolean) extends Thread {
   setDaemon(true)
 
+  private val log = LoggerFactory.getLogger(getClass)
+
   override def run(): Unit = {
     try {
       while (!stopRequest.get) {
         val socket = server.accept()
+        log.debug(s"New connection from $socket")
         val conn = new ConnectionThread(socket)
         conn.start()
       }
@@ -49,6 +53,8 @@ class ListenerThread(server: ServerSocket, stopRequest: AtomicBoolean) extends T
 
 class ConnectionThread(socket: Socket) extends Thread {
   setDaemon(true)
+
+  private val log = LoggerFactory.getLogger(getClass)
 
   override def run(): Unit = {
     try {
@@ -65,6 +71,7 @@ class ConnectionThread(socket: Socket) extends Thread {
         case _: SocketException =>
       }
     } finally {
+      log.debug(s"Disconnected from $socket")
       socket.close()
     }
   }
