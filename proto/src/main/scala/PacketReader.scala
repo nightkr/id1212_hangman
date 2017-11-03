@@ -1,7 +1,6 @@
 package se.nullable.kth.id1212.hangman.proto
 
-import java.io.{ ByteArrayInputStream, EOFException, InputStream }
-import java.util.Arrays
+import java.io.{ByteArrayInputStream, EOFException, InputStream}
 
 class PacketReader(stream: InputStream) {
   private def readToBuf(is: InputStream, buf: Array[Byte]): Unit = {

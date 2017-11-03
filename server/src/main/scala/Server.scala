@@ -10,6 +10,7 @@ class Server {
     try {
       println("Listening...")
       StdIn.readLine()
+    } finally {
       listener.close()
     }
   }

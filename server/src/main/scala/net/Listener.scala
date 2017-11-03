@@ -1,9 +1,10 @@
 package se.nullable.kth.id1212.hangman.server.net
 
-import java.io.{ Closeable, EOFException }
-import java.net.{ InetSocketAddress, ServerSocket, Socket, SocketAddress, SocketException }
+import java.io.{Closeable, EOFException}
+import java.net.{ServerSocket, Socket, SocketException}
 import java.util.concurrent.atomic.AtomicBoolean
-import se.nullable.kth.id1212.hangman.proto.{ PacketReader, PacketWriter }
+
+import se.nullable.kth.id1212.hangman.proto.{PacketReader, PacketWriter}
 import se.nullable.kth.id1212.hangman.server.model.controller.GameController
 
 class Listener extends Closeable {
