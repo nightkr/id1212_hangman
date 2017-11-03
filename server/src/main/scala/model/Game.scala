@@ -1,7 +1,7 @@
 package se.nullable.kth.id1212.hangman.server.model
 
 class Game(word: String) {
-  private var _triesRemaining = 5
+  private var _triesRemaining = 7
   private var _triedLetters = Set[Char]()
 
   def triesRemaining = _triesRemaining

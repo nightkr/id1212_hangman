@@ -13,7 +13,7 @@ class Server {
     listener.start()
     try {
       log.info("Listening... (press ENTER to stop)")
-      StdIn.readLine()
+      StdIn.readLine())
     } finally {
       listener.close()
     }

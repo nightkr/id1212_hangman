@@ -10,6 +10,8 @@ class GameController(sendPacket: Packet => Unit, close: () => Unit) {
 
   private val log = LoggerFactory.getLogger(getClass)
 
+  sendState()
+
   def handlePacket(packet: Packet): Unit = {
     packet match {
       case Packet.TryLetter(letter) =>
@@ -21,11 +23,15 @@ class GameController(sendPacket: Packet => Unit, close: () => Unit) {
 
   private def tryLetter(letter: Char): Unit = {
     game.tryLetter(letter)
-    sendPacket(gameStatePacket)
+    sendState()
     if (game.gameOver) {
       sendPacket(Packet.GameOver(game.isSolved))
       close()
     }
+  }
+
+  private def sendState(): Unit = {
+    sendPacket(gameStatePacket)
   }
 
   private def gameStatePacket = Packet.GameState(game.triesRemaining, game.triedLetters, game.clue)
