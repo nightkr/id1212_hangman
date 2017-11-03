@@ -26,7 +26,12 @@ class PacketReader(stream: InputStream) {
     readToBuf(is, buf)
     var value = 0
     for (i <- 0 until 4) {
-      value += ((buf(i).toInt & 0xFF) << (3 - i) * 8)
+      // This might seem redundant. Isn't a byte already between 0x00-FF?
+      // Well, as it turns out, at some point someone at Oracle/Sun decided that
+      // bytes are signed, and that they should be sign-extended.
+      val byte = buf(i).toInt & 0xFF
+      value <<= 8
+      value += byte
     }
     value
   }

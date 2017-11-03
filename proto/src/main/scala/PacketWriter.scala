@@ -5,10 +5,11 @@ import java.io.{ ByteArrayOutputStream, OutputStream }
 
 class PacketWriter(stream: OutputStream) {
   private def writeInt(os: OutputStream, value: Int): Unit = {
-    val buf = Array((value >> 24).toByte,
-                    (value >> 16).toByte,
-                    (value >> 8).toByte,
-                    value.toByte)
+    val buf = new Array[Byte](4)
+    for (i <- 0 until buf.length) {
+      val offset = (buf.length - 1 - i) * 8
+      buf(i) = (value >> offset).toByte
+    }
     os.write(buf)
   }
 
