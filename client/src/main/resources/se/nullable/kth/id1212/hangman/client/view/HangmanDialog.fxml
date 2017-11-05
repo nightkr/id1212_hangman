@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
@@ -7,29 +9,57 @@
 <?import javafx.scene.shape.SVGPath?>
 
 
-<HBox fx:id="window" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/8.0.162-ea" xmlns:fx="http://javafx.com/fxml/1">
+<VBox fx:id="window" xmlns="http://javafx.com/javafx/8.0.162-ea" xmlns:fx="http://javafx.com/fxml/1">
    <children>
-      <StackPane>
+      <HBox>
          <children>
-            <VBox fx:id="inProgressPane">
+            <HBox HBox.hgrow="ALWAYS">
                <children>
-                  <Label text="Try a letter!" />
+                  <Label text="Word: " />
                   <Label fx:id="clueLbl" text="(clue)" />
                </children>
-            </VBox>
-            <VBox fx:id="lostPane">
+               <HBox.margin>
+                  <Insets right="10.0" />
+               </HBox.margin>
+            </HBox>
+            <HBox>
                <children>
-                  <Label text="You are a loser!" />
-                  <Label text="Better luck next time..." />
+                  <Label text="Tries Remaining: " />
+                  <Label fx:id="triesRemainingLbl" text="(tries)" />
                </children>
-            </VBox>
-            <VBox>
-               <children>
-                  <Label fx:id="wonPane" text="You are a WINRAR!" />
-               </children>
-            </VBox>
+            </HBox>
          </children>
-      </StackPane>
-      <SVGPath fx:id="hangmanPath" content="M40,60 C42,48 44,30 25,32" fill="#ffffff00" stroke="BLACK" />
+      </HBox>
+      <Button fx:id="restartBtn" mnemonicParsing="false" text="New Game" />
+      <HBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity">
+         <children>
+            <VBox prefWidth="300.0">
+               <children>
+                  <StackPane fx:id="statesPane">
+                     <children>
+                        <VBox fx:id="inProgressPane">
+                           <children>
+                              <Label text="Press a key to try that letter!" />
+                              <Button fx:id="guessWordBtn" mnemonicParsing="false" text="Guess Word" />
+                           </children>
+                        </VBox>
+                        <VBox fx:id="lostPane">
+                           <children>
+                              <Label text="You are a loser!" />
+                              <Label text="Better luck next time..." />
+                           </children>
+                        </VBox>
+                        <VBox>
+                           <children>
+                              <Label fx:id="wonPane" text="You are a WINRAR!" />
+                           </children>
+                        </VBox>
+                     </children>
+                  </StackPane>
+               </children>
+            </VBox>
+            <SVGPath fx:id="hangmanPath" content="M 32.69487,46.969276 H 200.49931 V 167.75008 H 32.69487 Z" fill="#ffffff00" stroke="BLACK" />
+         </children>
+      </HBox>
    </children>
-</HBox>
+</VBox>

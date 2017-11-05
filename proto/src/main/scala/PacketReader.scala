@@ -80,6 +80,11 @@ class PacketReader(stream: InputStream) {
         case Packet.Types.GAME_OVER =>
           val win = readBoolean(frame)
           Packet.GameOver(win)
+        case Packet.Types.TRY_WORD =>
+          val word = readString(frame)
+          Packet.TryWord(word)
+        case Packet.Types.RESTART =>
+          Packet.Restart
         case _ =>
           throw new InvalidPacketException("Unknown packet type")
       }

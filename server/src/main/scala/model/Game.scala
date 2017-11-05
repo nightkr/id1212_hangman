@@ -1,7 +1,7 @@
 package se.nullable.kth.id1212.hangman.server.model
 
 class Game(word: String) {
-  private var _triesRemaining = 7
+  private var _triesRemaining = word.length()
   private var _triedLetters = Set[Char]()
 
   def triesRemaining = _triesRemaining
@@ -11,6 +11,16 @@ class Game(word: String) {
     if (!gameOver && !triedLetters.contains(letter) && isLetter(letter)) {
       _triedLetters += letter
       if (!word.contains(letter)) {
+        _triesRemaining -= 1
+      }
+    }
+  }
+
+  def tryWord(word: String): Unit = {
+    if (!gameOver) {
+      if (word == this.word) {
+        _triedLetters = this.word.toSet
+      } else {
         _triesRemaining -= 1
       }
     }

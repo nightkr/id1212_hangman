@@ -6,7 +6,7 @@ import se.nullable.kth.id1212.hangman.server.model.Game
 
 class GameController(sendPacket: Packet => Unit, close: () => Unit) {
   private val word = "asdf"
-  private val game = new Game(word)
+  private var game = new Game(word)
 
   private val log = LoggerFactory.getLogger(getClass)
 
@@ -15,18 +15,17 @@ class GameController(sendPacket: Packet => Unit, close: () => Unit) {
   def handlePacket(packet: Packet): Unit = {
     packet match {
       case Packet.TryLetter(letter) =>
-        tryLetter(letter)
+        game.tryLetter(letter)
+      case Packet.TryWord(word) =>
+        game.tryWord(word)
+      case Packet.Restart =>
+        game = new Game(word)
       case pkt =>
         log.error(s"Invalid packet: $pkt")
     }
-  }
-
-  private def tryLetter(letter: Char): Unit = {
-    game.tryLetter(letter)
     sendState()
     if (game.gameOver) {
       sendPacket(Packet.GameOver(game.isSolved))
-      close()
     }
   }
 

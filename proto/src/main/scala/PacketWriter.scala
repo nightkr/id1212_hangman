@@ -42,6 +42,11 @@ class PacketWriter(stream: OutputStream) {
       case pkt: Packet.GameOver =>
         writeInt(frame, Packet.Types.GAME_OVER)
         writeBoolean(frame, pkt.win)
+      case pkt: Packet.TryWord =>
+        writeInt(frame, Packet.Types.TRY_WORD)
+        writeString(frame, pkt.word)
+      case Packet.Restart =>
+        writeInt(frame, Packet.Types.RESTART)
     }
     writeInt(stream, frame.size())
     frame.writeTo(stream)
