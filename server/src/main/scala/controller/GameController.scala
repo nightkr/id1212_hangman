@@ -1,16 +1,22 @@
 package se.nullable.kth.id1212.hangman.server.model.controller
 
+import javax.inject.{ Inject, Provider }
 import org.slf4j.LoggerFactory
 import se.nullable.kth.id1212.hangman.proto.Packet
 import se.nullable.kth.id1212.hangman.server.model.Game
 
-class GameController(sendPacket: Packet => Unit, close: () => Unit) {
-  private val word = "asdf"
-  private var game = new Game(word)
+class GameController @Inject() (gameProvider: Provider[Game]) {
+  private var game = gameProvider.get
 
   private val log = LoggerFactory.getLogger(getClass)
 
-  sendState()
+  private var sendPacket: Option[Packet => Unit] = None
+
+  def start(sendPacket: Packet => Unit): Unit = {
+    this.sendPacket = Some(sendPacket)
+
+    sendState()
+  }
 
   def handlePacket(packet: Packet): Unit = {
     packet match {
@@ -19,18 +25,18 @@ class GameController(sendPacket: Packet => Unit, close: () => Unit) {
       case Packet.TryWord(word) =>
         game.tryWord(word)
       case Packet.Restart =>
-        game = new Game(word)
+        game = gameProvider.get
       case pkt =>
         log.error(s"Invalid packet: $pkt")
     }
     sendState()
     if (game.gameOver) {
-      sendPacket(Packet.GameOver(game.isSolved))
+      sendPacket.get(Packet.GameOver(game.isSolved))
     }
   }
 
   private def sendState(): Unit = {
-    sendPacket(gameStatePacket)
+    sendPacket.get(gameStatePacket)
   }
 
   private def gameStatePacket = Packet.GameState(game.triesRemaining, game.triedLetters, game.clue)

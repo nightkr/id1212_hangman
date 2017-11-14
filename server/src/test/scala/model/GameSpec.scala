@@ -7,7 +7,7 @@ class GameSpec extends WordSpec with Matchers {
   "A Game" when {
     "trying the same invalid letter twice" should {
       "ignore the second attempt" in {
-        val game = new Game("asdf")
+        val game = new Game(Word("asdf"))
         val initialTries = game.triesRemaining
         game.tryLetter('q')
         game.triesRemaining shouldEqual initialTries - 1
@@ -22,14 +22,14 @@ class GameSpec extends WordSpec with Matchers {
 
     "trying a valid letter" should {
       "not count it as an attempt" in {
-        val game = new Game("asdf")
+        val game = new Game(Word("asdf"))
         val initialTries = game.triesRemaining
         game.tryLetter('a')
         game.triesRemaining shouldEqual initialTries
       }
 
       "reveal the letter in the clue" in {
-        val game = new Game("asa")
+        val game = new Game(Word("asa"))
         game.clue shouldEqual Seq(None, None, None)
         game.tryLetter('a')
         game.clue shouldEqual Seq(Some('a'), None, Some('a'))
@@ -38,7 +38,7 @@ class GameSpec extends WordSpec with Matchers {
 
     "having lost the game" should {
       "not allow any more tries" in {
-        val game = new Game("z")
+        val game = new Game(Word("z"))
         var letter = 'a'
         while (!game.gameOver) {
           game.tryLetter(letter)
@@ -54,7 +54,7 @@ class GameSpec extends WordSpec with Matchers {
 
     "having solved the game" should {
       "be won" in {
-        val game = new Game("z")
+        val game = new Game(Word("z"))
         game.gameOver shouldEqual false
         game.isSolved shouldEqual false
         game.tryLetter('z')

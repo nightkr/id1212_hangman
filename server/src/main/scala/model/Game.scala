@@ -1,7 +1,10 @@
 package se.nullable.kth.id1212.hangman.server.model
 
-class Game(word: String) {
-  private var _triesRemaining = word.length()
+import javax.inject.Inject
+
+
+class Game @Inject() (word: Word) {
+  private var _triesRemaining = word.str.length()
   private var _triedLetters = Set[Char]()
 
   def triesRemaining = _triesRemaining
@@ -10,7 +13,7 @@ class Game(word: String) {
   def tryLetter(letter: Char): Unit = {
     if (!gameOver && !triedLetters.contains(letter) && isLetter(letter)) {
       _triedLetters += letter
-      if (!word.contains(letter)) {
+      if (!word.str.contains(letter)) {
         _triesRemaining -= 1
       }
     }
@@ -19,7 +22,7 @@ class Game(word: String) {
   def tryWord(word: String): Unit = {
     if (!gameOver) {
       if (word == this.word) {
-        _triedLetters = this.word.toSet
+        _triedLetters = this.word.str.toSet
       } else {
         _triesRemaining -= 1
       }
@@ -27,8 +30,10 @@ class Game(word: String) {
   }
 
   def isLetter(chr: Char) = chr >= 'a' && chr <= 'z'
-  def clue: Seq[Option[Char]] = word.map(Some(_).filter(char => !isLetter(char) || triedLetters.contains(char)))
+  def clue: Seq[Option[Char]] = word.str.map(Some(_).filter(char => !isLetter(char) || triedLetters.contains(char)))
 
-  def isSolved = clue == word.map(Some(_))
+  def isSolved = clue == word.str.map(Some(_))
   def gameOver = triesRemaining == 0 || isSolved
 }
+
+case class Word(str: String)

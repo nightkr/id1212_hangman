@@ -1,6 +1,7 @@
 lazy val sharedSettings = Seq(
   libraryDependencies ++= Seq(
     "org.slf4j" % "slf4j-api" % "1.7.5",
+    "com.google.inject" % "guice" % "4.1.0",
     "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
     "org.scalatest" %% "scalatest" % "3.0.4" % "test",
     "org.scalacheck" %% "scalacheck" % "1.13.4" % "test"

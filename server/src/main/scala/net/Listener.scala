@@ -3,12 +3,13 @@ package se.nullable.kth.id1212.hangman.server.net
 import java.io.{Closeable, EOFException}
 import java.net.{ServerSocket, Socket, SocketException}
 import java.util.concurrent.atomic.AtomicBoolean
+import javax.inject.{ Inject, Provider }
 import org.slf4j.LoggerFactory
 
 import se.nullable.kth.id1212.hangman.proto.{PacketReader, PacketWriter}
 import se.nullable.kth.id1212.hangman.server.model.controller.GameController
 
-class Listener extends Closeable {
+class Listener @Inject() (controllerProvider: Provider[GameController]) extends Closeable {
   private val stop = new AtomicBoolean(false)
   private var thread: Option[Thread] = None
 
@@ -16,7 +17,7 @@ class Listener extends Closeable {
     close()
 
     val server = new ServerSocket(2729)
-    val t = new ListenerThread(server, stop)
+    val t = new ListenerThread(server, stop, controllerProvider)
     t.start()
     thread = Some(t)
   }
@@ -32,7 +33,7 @@ class Listener extends Closeable {
   }
 }
 
-class ListenerThread(server: ServerSocket, stopRequest: AtomicBoolean) extends Thread {
+class ListenerThread(server: ServerSocket, stopRequest: AtomicBoolean, controllerProvider: Provider[GameController]) extends Thread {
   setDaemon(true)
 
   private val log = LoggerFactory.getLogger(getClass)
@@ -42,7 +43,7 @@ class ListenerThread(server: ServerSocket, stopRequest: AtomicBoolean) extends T
       while (!stopRequest.get) {
         val socket = server.accept()
         log.debug(s"New connection from $socket")
-        val conn = new ConnectionThread(socket)
+        val conn = new ConnectionThread(socket, controllerProvider)
         conn.start()
       }
     } finally {
@@ -51,7 +52,7 @@ class ListenerThread(server: ServerSocket, stopRequest: AtomicBoolean) extends T
   }
 }
 
-class ConnectionThread(socket: Socket) extends Thread {
+class ConnectionThread(socket: Socket, controllerProvider: Provider[GameController]) extends Thread {
   setDaemon(true)
 
   private val log = LoggerFactory.getLogger(getClass)
@@ -60,7 +61,8 @@ class ConnectionThread(socket: Socket) extends Thread {
     try {
       val reader = new PacketReader(socket.getInputStream)
       val writer = new PacketWriter(socket.getOutputStream)
-      val ctrl = new GameController(writer.write, () => socket.close())
+      val ctrl = controllerProvider.get
+      ctrl.start(writer.write)
       try {
         while (true) {
           val packet = reader.readNext()

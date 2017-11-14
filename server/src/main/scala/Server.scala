@@ -1,15 +1,16 @@
 package se.nullable.kth.id1212.hangman.server
 
+import com.google.inject.Guice
+import javax.inject.Inject
 import scala.io.StdIn
 
 import org.slf4j.LoggerFactory
 import se.nullable.kth.id1212.hangman.server.net.Listener
 
-class Server {
+class Server @Inject() (listener: Listener) {
   private val log = LoggerFactory.getLogger(getClass)
 
   def run(): Unit = {
-    val listener = new Listener
     listener.start()
     try {
       log.info("Listening... (press ENTER to stop)")
@@ -21,5 +22,6 @@ class Server {
 }
 
 object Server extends App {
-  new Server().run()
+  val injector = Guice.createInjector(new ServerModule)
+  injector.getInstance(classOf[Server]).run()
 }
