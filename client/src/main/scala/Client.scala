@@ -13,12 +13,11 @@ class Client extends Application {
     val controller = new ClientController()
     val view = new ViewController(controller)
     controller.addListener(view.UpdateListener)
-    controller.start()
 
     val fxml = new FXMLLoader
     fxml.setController(view)
-    fxml.setLocation(getClass.getResource("view/HangmanDialog.fxml"))
-    val content: Parent = fxml.load()
+    fxml.setLocation(view.getClass.getResource("hangman-dialog.fxml"))
+    val content = fxml.load[Parent]()
     val scene = new Scene(content)
     stage.setScene(scene)
     stage.setTitle("NetHangman")

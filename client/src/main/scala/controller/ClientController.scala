@@ -15,8 +15,8 @@ class ClientController {
     listeners += listener
   }
 
-  def start(): Unit = {
-    connection.start()
+  def start(host: String, port: String): Unit = {
+    connection.start(host, port)
   }
 
   def stop(): Unit = {

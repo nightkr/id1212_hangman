@@ -1,10 +1,12 @@
 package se.nullable.kth.id1212.hangman.client.view
 
-import javafx.application.Platform
+import javafx.application.{ Application, Platform }
 import javafx.beans.binding.{Bindings, StringExpression}
 import javafx.beans.property.{BooleanProperty, IntegerProperty, SimpleBooleanProperty, SimpleIntegerProperty, SimpleStringProperty, StringProperty}
-import javafx.fxml.FXML
-import javafx.scene.Node
+import javafx.fxml.{ FXML, FXMLLoader }
+import javafx.scene.Scene
+import javafx.scene.control.{ Alert, ButtonType, Dialog, DialogPane }
+import javafx.scene.{ Node, Parent }
 import javafx.scene.control.{ Button, Label, TextInputDialog }
 import javafx.scene.input.KeyEvent
 import javafx.scene.layout.{ Pane, StackPane }
@@ -97,6 +99,37 @@ class ViewController(controller: ClientController) {
                              }
                            }
     )
+
+    showConnectDialog()
+  }
+
+  def showConnectDialog(): Unit = {
+    val connectController = new ConnectViewController()
+    val fxml = new FXMLLoader
+    fxml.setController(connectController)
+    fxml.setLocation(getClass.getResource("connect-dialog.fxml"))
+    val dialogPane = fxml.load[DialogPane]()
+    val dialog = new Dialog[ButtonType]
+    dialog.setDialogPane(dialogPane)
+
+    var connected = false
+    while (!connected) {
+      if (dialog.showAndWait().get() == ButtonType.OK) {
+        try {
+          controller.start(connectController.host.get, connectController.port.get)
+          connected = true
+        } catch {
+          case ex: Exception =>
+            ex.printStackTrace()
+            val alert = new Alert(Alert.AlertType.ERROR)
+            alert.setHeaderText("Unable to connect")
+            alert.setContentText(ex.getMessage)
+            alert.showAndWait()
+        }
+      } else {
+        System.exit(0)
+      }
+    }
   }
 
   object UpdateListener extends UpdateListener {

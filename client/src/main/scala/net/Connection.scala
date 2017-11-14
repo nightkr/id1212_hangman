@@ -8,8 +8,8 @@ class Connection(packetListener: Packet => Unit) {
   private val socket: Socket = new Socket()
   private var writer: Option[PacketWriter] = None
 
-  def start(): Unit = {
-    socket.connect(new InetSocketAddress("127.0.0.1", 2729))
+  def start(host: String, port: String): Unit = {
+    socket.connect(new InetSocketAddress(host, port.toInt))
     writer = Some(new PacketWriter(socket.getOutputStream))
     val reader = new PacketReader(socket.getInputStream)
     new ReaderThread(reader, packetListener).start()
