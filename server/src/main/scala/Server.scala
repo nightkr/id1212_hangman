@@ -10,8 +10,8 @@ import se.nullable.kth.id1212.hangman.server.net.Listener
 class Server @Inject() (listener: Listener) {
   private val log = LoggerFactory.getLogger(getClass)
 
-  def run(): Unit = {
-    listener.start()
+  def run(port: Int): Unit = {
+    listener.start(port)
     try {
       log.info("Listening... (press ENTER to stop)")
       StdIn.readLine()
@@ -22,6 +22,12 @@ class Server @Inject() (listener: Listener) {
 }
 
 object Server extends App {
-  val injector = Guice.createInjector(new ServerModule)
-  injector.getInstance(classOf[Server]).run()
+  args match {
+    case Array(portStr) =>
+      val port = portStr.toInt
+      val injector = Guice.createInjector(new ServerModule)
+      injector.getInstance(classOf[Server]).run(port)
+    case _ =>
+      println("Usage: hangman_server <port>")
+  }
 }

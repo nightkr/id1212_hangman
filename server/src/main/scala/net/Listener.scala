@@ -10,42 +10,46 @@ import se.nullable.kth.id1212.hangman.proto.{PacketReader, PacketWriter}
 import se.nullable.kth.id1212.hangman.server.model.controller.GameController
 
 class Listener @Inject() (controllerProvider: Provider[GameController]) extends Closeable {
-  private val stop = new AtomicBoolean(false)
-  private var thread: Option[Thread] = None
+  private var thread: Option[(Thread, ServerSocket)] = None
 
-  def start(): Unit = {
+  def start(port: Int): Unit = {
     close()
 
-    val server = new ServerSocket(2729)
-    val t = new ListenerThread(server, stop, controllerProvider)
+    val server = new ServerSocket(port)
+    val t = new ListenerThread(server, controllerProvider)
     t.start()
-    thread = Some(t)
+    thread = Some((t, server))
   }
 
   override def close(): Unit = {
-    stop.set(true)
-    thread.foreach { t =>
-      new Socket("localhost", 2729).close() // Interrupt the accept loop
+    thread.foreach { case (t, socket) =>
+      socket.close()
       t.join()
     }
     thread = None
-    stop.set(false)
   }
 }
 
-class ListenerThread(server: ServerSocket, stopRequest: AtomicBoolean, controllerProvider: Provider[GameController]) extends Thread {
+class ListenerThread(server: ServerSocket, controllerProvider: Provider[GameController]) extends Thread {
   setDaemon(true)
 
   private val log = LoggerFactory.getLogger(getClass)
 
   override def run(): Unit = {
     try {
-      while (!stopRequest.get) {
+      while (!server.isClosed()) {
         val socket = server.accept()
         log.debug(s"New connection from $socket")
         val conn = new ConnectionThread(socket, controllerProvider)
         conn.start()
       }
+    } catch {
+      case ex: SocketException =>
+        if (server.isClosed()) {
+          // Socket is closed, terminate listening thread
+        } else {
+          throw ex
+        }
     } finally {
       server.close()
     }
