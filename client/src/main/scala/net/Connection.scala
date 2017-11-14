@@ -5,10 +5,12 @@ import java.net.{ InetSocketAddress, Socket }
 import se.nullable.kth.id1212.hangman.proto.{ Packet, PacketReader, PacketWriter }
 
 class Connection(packetListener: Packet => Unit) {
-  private val socket: Socket = new Socket()
+  private var socket: Socket = new Socket()
   private var writer: Option[PacketWriter] = None
 
   def start(host: String, port: String): Unit = {
+    stop()
+    socket = new Socket()
     socket.connect(new InetSocketAddress(host, port.toInt))
     writer = Some(new PacketWriter(socket.getOutputStream))
     val reader = new PacketReader(socket.getInputStream)
