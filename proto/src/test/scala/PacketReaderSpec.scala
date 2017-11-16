@@ -2,7 +2,7 @@ package se.nullable.kth.id1212.hangman.proto
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, EOFException}
 import java.nio.ByteBuffer
-import java.nio.channels.Pipe
+import java.nio.channels.{ ClosedChannelException, Pipe }
 
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.{Matchers, WordSpec}
@@ -141,12 +141,37 @@ class PacketReaderSpec extends WordSpec with Matchers with PropertyChecks {
         reader.readNext() shouldEqual None
       }
     }
+
+    "given an EOF" should {
+      "throw ClosedChannelException" in {
+        val pipe = Pipe.open()
+        pipe.source().configureBlocking(false)
+        val reader = new AsyncPacketReader(pipe.source())
+        pipe.sink().close()
+        assertThrows[ClosedChannelException](reader.readNext())
+      }
+    }
   }
 
   "An AsyncPacketWriter" should {
     "given a packet" should {
       "produce the same value as PacketWriter" in {
-        pending
+        forAll { packet: Packet =>
+          val bos = new ByteArrayOutputStream()
+          val writer = new PacketWriter(bos)
+          writer.write(packet)
+          val pipe = Pipe.open()
+          pipe.source().configureBlocking(false)
+          val asyncWriter = new AsyncPacketWriter(pipe.sink())
+          asyncWriter.write(packet)
+          asyncWriter.flush()
+          val asyncBuf = ByteBuffer.allocate(bos.size() + 1)
+          pipe.source().read(asyncBuf)
+          asyncBuf.flip()
+          val asyncBufArray = Array.ofDim[Byte](asyncBuf.limit())
+          asyncBuf.get(asyncBufArray)
+          asyncBufArray shouldEqual bos.toByteArray()
+        }
       }
     }
   }
