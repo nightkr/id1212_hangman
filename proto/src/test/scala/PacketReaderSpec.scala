@@ -1,6 +1,8 @@
 package se.nullable.kth.id1212.hangman.proto
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, EOFException}
+import java.nio.ByteBuffer
+import java.nio.channels.Pipe
 
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.{Matchers, WordSpec}
@@ -54,26 +56,26 @@ class PacketReaderSpec extends WordSpec with Matchers with PropertyChecks {
     }
   }
 
+  val genPacketTryLetter: Gen[Packet.TryLetter] = for {
+    letter <- Gen.alphaChar
+  } yield Packet.TryLetter(letter)
+  val genPacketGameState: Gen[Packet.GameState] = for {
+    triesLeft <- Gen.choose(0, 500)
+    triedChars <- Gen.listOf(Gen.alphaLowerChar)
+    clue <- Gen.listOf(Gen.option(Gen.alphaNumChar))
+  } yield Packet.GameState(triesLeft, triedChars.toSet, clue)
+  val genPacketGameOver: Gen[Packet.GameOver] = for {
+    win <- Gen.oneOf(false, true)
+  } yield Packet.GameOver(win)
+  val gamePacketTryWord: Gen[Packet.TryWord] = for {
+    word <- Gen.alphaStr
+  } yield Packet.TryWord(word)
+  val gamePacketRestart: Gen[Packet.Restart.type] = Gen.const(Packet.Restart)
+
+  implicit val genPacket: Arbitrary[Packet] = Arbitrary(Gen.oneOf(genPacketTryLetter, genPacketGameState, genPacketGameOver, gamePacketTryWord, gamePacketRestart))
+
   "A PacketReader" when {
     "given a value serialized by PacketWriter" should {
-      val genPacketTryLetter: Gen[Packet.TryLetter] = for {
-        letter <- Gen.alphaChar
-      } yield Packet.TryLetter(letter)
-      val genPacketGameState: Gen[Packet.GameState] = for {
-        triesLeft <- Gen.choose(0, 500)
-        triedChars <- Gen.listOf(Gen.alphaLowerChar)
-        clue <- Gen.listOf(Gen.option(Gen.alphaNumChar))
-      } yield Packet.GameState(triesLeft, triedChars.toSet, clue)
-      val genPacketGameOver: Gen[Packet.GameOver] = for {
-        win <- Gen.oneOf(false, true)
-      } yield Packet.GameOver(win)
-      val gamePacketTryWord: Gen[Packet.TryWord] = for {
-        word <- Gen.alphaStr
-      } yield Packet.TryWord(word)
-      val gamePacketRestart: Gen[Packet.Restart.type] = Gen.const(Packet.Restart)
-
-      implicit val genPacket: Arbitrary[Packet] = Arbitrary(Gen.oneOf(genPacketTryLetter, genPacketGameState, genPacketGameOver, gamePacketTryWord, gamePacketRestart))
-
       "give back the same value" in {
         forAll { packet: Packet =>
           val bos = new ByteArrayOutputStream
@@ -83,6 +85,68 @@ class PacketReaderSpec extends WordSpec with Matchers with PropertyChecks {
           val readPkt = reader.readNext()
           readPkt shouldEqual packet
         }
+      }
+    }
+  }
+
+  "An AsyncPacketReader" when {
+    "given a value serialized by PacketWriter" should {
+      "give back the same value" in {
+        forAll { packet: Packet =>
+          val bos = new ByteArrayOutputStream()
+          val writer = new PacketWriter(bos)
+          writer.write(packet)
+          val pipe = Pipe.open()
+          pipe.source().configureBlocking(false)
+          pipe.sink().write(ByteBuffer.wrap(bos.toByteArray()))
+          val reader = new AsyncPacketReader(pipe.source())
+          reader.readNext() shouldEqual Some(packet)
+        }
+      }
+    }
+
+    "given a partial packet" should {
+      "give back None until the full value is available" in {
+        val packet = Seq[Byte](
+          0, 0, 0, 5, // Packet length
+          0, 0, 0, 1, // Type 1 (TryLetter)
+          'c'.toByte
+        )
+        val pipe = Pipe.open()
+        pipe.source.configureBlocking(false)
+        val reader = new AsyncPacketReader(pipe.source())
+        for (byte <- packet) {
+          reader.readNext() shouldEqual None
+          pipe.sink.write(ByteBuffer.wrap(Array(byte)))
+        }
+        reader.readNext() shouldEqual Some(Packet.TryLetter('c'))
+      }
+    }
+
+    "given multiple packets" should {
+      "give back one at a time" in {
+        val packets = 5
+        val packet = ByteBuffer.wrap((0 to packets).flatMap(_ => Seq[Byte](
+          0, 0, 0, 5, // Packet length
+          0, 0, 0, 1, // Type 1 (TryLetter)
+          'c'.toByte
+        )).toArray)
+        val pipe = Pipe.open()
+        pipe.source.configureBlocking(false)
+        pipe.sink().write(packet)
+        val reader = new AsyncPacketReader(pipe.source())
+        for (i <- 0 to packets) {
+          reader.readNext() shouldEqual Some(Packet.TryLetter('c'))
+        }
+        reader.readNext() shouldEqual None
+      }
+    }
+  }
+
+  "An AsyncPacketWriter" should {
+    "given a packet" should {
+      "produce the same value as PacketWriter" in {
+        pending
       }
     }
   }
