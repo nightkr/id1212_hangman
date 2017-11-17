@@ -1,21 +1,25 @@
 package se.nullable.kth.id1212.hangman.server.net
 
-import java.io.{Closeable, EOFException}
-import java.net.{ServerSocket, Socket, SocketException}
-import java.util.concurrent.atomic.AtomicBoolean
-import javax.inject.{ Inject, Provider }
-import org.slf4j.LoggerFactory
+import java.io.Closeable
+import java.net.InetSocketAddress
+import java.nio.channels.{ClosedChannelException, SelectionKey, Selector, ServerSocketChannel, SocketChannel}
 
-import se.nullable.kth.id1212.hangman.proto.{PacketReader, PacketWriter}
+import scala.collection.JavaConverters._
+
+import javax.inject.{Inject, Provider}
+import org.slf4j.LoggerFactory
+import se.nullable.kth.id1212.hangman.proto.{AsyncPacketReader, AsyncPacketWriter}
 import se.nullable.kth.id1212.hangman.server.model.controller.GameController
 
 class Listener @Inject() (controllerProvider: Provider[GameController]) extends Closeable {
-  private var thread: Option[(Thread, ServerSocket)] = None
+  private var thread: Option[(Thread, ServerSocketChannel)] = None
 
   def start(port: Int): Unit = {
     close()
 
-    val server = new ServerSocket(port)
+    val server = ServerSocketChannel.open()
+    server.bind(new InetSocketAddress(port))
+    server.configureBlocking(false)
     val t = new ListenerThread(server, controllerProvider)
     t.start()
     thread = Some((t, server))
@@ -24,61 +28,91 @@ class Listener @Inject() (controllerProvider: Provider[GameController]) extends 
   override def close(): Unit = {
     thread.foreach { case (t, socket) =>
       socket.close()
+      t.interrupt()
       t.join()
     }
     thread = None
   }
 }
 
-class ListenerThread(server: ServerSocket, controllerProvider: Provider[GameController]) extends Thread {
+class ListenerThread(server: ServerSocketChannel, controllerProvider: Provider[GameController]) extends Thread {
   setDaemon(true)
 
   private val log = LoggerFactory.getLogger(getClass)
+  private val selector = Selector.open()
+  server.register(selector, SelectionKey.OP_ACCEPT)
 
   override def run(): Unit = {
     try {
-      while (!server.isClosed()) {
-        val socket = server.accept()
-        log.debug(s"New connection from $socket")
-        val conn = new ConnectionThread(socket, controllerProvider)
-        conn.start()
-      }
-    } catch {
-      case ex: SocketException =>
-        if (server.isClosed()) {
-          // Socket is closed, terminate listening thread
-        } else {
-          throw ex
+      while (server.isOpen()) {
+        selector.select()
+        for (key <- selector.selectedKeys().asScala) {
+          key.channel() match {
+            case serverChan: ServerSocketChannel =>
+              if (key.isAcceptable()) {
+                Option(serverChan.accept()).foreach { socket =>
+                  socket.configureBlocking(false)
+                  val key = socket.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE)
+                  log.debug(s"New connection from $socket")
+                  val conn = new ConnectionHandler(socket, controllerProvider)
+                  conn.start()
+                  key.attach(conn)
+                }
+              }
+            case socket: SocketChannel =>
+              if (key.isReadable()) {
+                key.attachment.asInstanceOf[ConnectionHandler].read()
+              }
+              if (key.isValid() && key.isWritable()) {
+                key.attachment.asInstanceOf[ConnectionHandler].write()
+              }
+          }
         }
+      }
     } finally {
-      server.close()
+      for (key <- selector.keys().asScala) {
+        if (key.channel().isOpen()) {
+          key.channel().close()
+        }
+      }
+      selector.close()
     }
   }
 }
 
-class ConnectionThread(socket: Socket, controllerProvider: Provider[GameController]) extends Thread {
-  setDaemon(true)
-
+class ConnectionHandler(socket: SocketChannel, controllerProvider: Provider[GameController]) {
+  private val reader = new AsyncPacketReader(socket)
+  private val writer = new AsyncPacketWriter(socket)
+  private val ctrl = controllerProvider.get
   private val log = LoggerFactory.getLogger(getClass)
 
-  override def run(): Unit = {
+  def start(): Unit = {
+    ctrl.start(writer.write)
+  }
+
+  def stop(): Unit = {
+    log.debug(s"Disconnected from $socket")
+    socket.close()
+  }
+
+  def read(): Unit = {
     try {
-      val reader = new PacketReader(socket.getInputStream)
-      val writer = new PacketWriter(socket.getOutputStream)
-      val ctrl = controllerProvider.get
-      ctrl.start(writer.write)
-      try {
-        while (true) {
-          val packet = reader.readNext()
-          ctrl.handlePacket(packet)
-        }
-      } catch {
-        case _: EOFException =>
-        case _: SocketException =>
-      }
-    } finally {
-      log.debug(s"Disconnected from $socket")
-      socket.close()
+      Stream.continually(reader.readNext())
+        .takeWhile(_.isDefined)
+        .flatten
+        .foreach(ctrl.handlePacket)
+    } catch {
+      case _: ClosedChannelException =>
+        stop()
+    }
+  }
+
+  def write(): Unit = {
+    try {
+      writer.flush()
+    } catch {
+      case _: ClosedChannelException =>
+        stop()
     }
   }
 }
