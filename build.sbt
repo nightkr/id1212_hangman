@@ -14,12 +14,10 @@ lazy val proto = project.settings(sharedSettings: _*)
 
 lazy val server = project.settings(sharedSettings: _*).dependsOn(proto)
 
-lazy val dumb_client = project.settings(sharedSettings: _*).dependsOn(proto)
-
 lazy val client = project.settings(sharedSettings: _*).settings(
   fork in run := true,
   unmanagedJars in Compile += Attributed.blank(
     file(System.getProperty("java.home")) / "lib/ext/jfxrt.jar")
 ).dependsOn(proto)
 
-lazy val root = project.in(file(".")).aggregate(proto, server, dumb_client, client)
+lazy val root = project.in(file(".")).aggregate(proto, server, client)

@@ -2,7 +2,6 @@
 
 - proto contains the shared protocol code, both DTOs (in the form of Scala case classes), and decoders/encoders
 - server contains the game server
-- dumb_client contains a CLI client that just lets you try letters, and prints the received packets
 - client contains the GUI client
 
 * Running
