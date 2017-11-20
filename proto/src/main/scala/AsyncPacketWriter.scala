@@ -52,12 +52,13 @@ class AsyncPacketWriter(channel: WritableByteChannel) {
     flush()
   }
 
-  def flush(): Unit = {
+  def flush(): Boolean = {
     buf.flip()
     try {
       if (buf.hasRemaining()) {
         channel.write(buf)
       }
+      buf.hasRemaining()
     } finally {
       buf.compact()
     }

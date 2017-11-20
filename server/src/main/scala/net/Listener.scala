@@ -54,18 +54,18 @@ class ListenerThread(server: ServerSocketChannel, controllerProvider: Provider[G
               if (key.isAcceptable()) {
                 Option(serverChan.accept()).foreach { socket =>
                   socket.configureBlocking(false)
-                  val key = socket.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE)
+                  val clientKey = socket.register(selector, SelectionKey.OP_READ)
                   log.debug(s"New connection from $socket")
-                  val conn = new ConnectionHandler(socket, controllerProvider)
+                  val conn = new ConnectionHandler(socket, clientKey, controllerProvider)
+                  clientKey.attach(conn)
                   conn.start()
-                  key.attach(conn)
                 }
               }
             case socket: SocketChannel =>
               if (key.isReadable()) {
                 key.attachment.asInstanceOf[ConnectionHandler].read()
               }
-              if (key.isValid() && key.isWritable()) {
+              if (key.isValid && key.isWritable()) {
                 key.attachment.asInstanceOf[ConnectionHandler].write()
               }
           }
@@ -82,7 +82,7 @@ class ListenerThread(server: ServerSocketChannel, controllerProvider: Provider[G
   }
 }
 
-class ConnectionHandler(socket: SocketChannel, controllerProvider: Provider[GameController]) {
+class ConnectionHandler(socket: SocketChannel, key: SelectionKey, controllerProvider: Provider[GameController]) {
   private val reader = new AsyncPacketReader(socket)
   private val writer = new AsyncPacketWriter(socket)
   private val ctrl = controllerProvider.get
@@ -103,6 +103,7 @@ class ConnectionHandler(socket: SocketChannel, controllerProvider: Provider[Game
         .takeWhile(_.isDefined)
         .flatten
         .foreach(ctrl.handlePacket)
+      key.interestOps(key.interestOps() | SelectionKey.OP_WRITE)
     } catch {
       case _: ClosedChannelException =>
         stop()
@@ -111,7 +112,9 @@ class ConnectionHandler(socket: SocketChannel, controllerProvider: Provider[Game
 
   def write(): Unit = {
     try {
-      writer.flush()
+      if (!writer.flush()) {
+        key.interestOps(key.interestOps() & ~SelectionKey.OP_WRITE)
+      }
     } catch {
       case _: ClosedChannelException =>
         stop()
