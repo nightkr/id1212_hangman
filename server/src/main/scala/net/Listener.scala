@@ -43,6 +43,7 @@ class ListenerThread(server: ServerSocketChannel, controllerProvider: Provider[G
   server.register(selector, SelectionKey.OP_ACCEPT)
 
   override def run(): Unit = {
+    log.info(s"Listening on ${server.getLocalAddress}")
     try {
       while (server.isOpen()) {
         selector.select()
