@@ -48,6 +48,7 @@ class ListenerThread(server: ServerSocketChannel, controllerProvider: Provider[G
       while (server.isOpen()) {
         selector.select()
         for (key <- selector.selectedKeys().asScala) {
+          selector.selectedKeys().remove(key)
           key.channel() match {
             case serverChan: ServerSocketChannel =>
               if (key.isAcceptable()) {
