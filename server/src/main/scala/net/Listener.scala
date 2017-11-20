@@ -62,11 +62,17 @@ class ListenerThread(server: ServerSocketChannel, controllerProvider: Provider[G
                 }
               }
             case socket: SocketChannel =>
-              if (key.isReadable()) {
-                key.attachment.asInstanceOf[ConnectionHandler].read()
-              }
-              if (key.isValid && key.isWritable()) {
-                key.attachment.asInstanceOf[ConnectionHandler].write()
+              try {
+                if (key.isReadable()) {
+                  key.attachment.asInstanceOf[ConnectionHandler].read()
+                }
+                if (key.isValid && key.isWritable()) {
+                  key.attachment.asInstanceOf[ConnectionHandler].write()
+                }
+              } catch {
+                case ex: Exception =>
+                  log.error(s"Error in connection from ${socket.getRemoteAddress}, disconnecting", ex)
+                  socket.close()
               }
           }
         }
