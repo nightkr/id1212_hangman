@@ -7,12 +7,11 @@ import scala.collection.JavaConverters._
 import se.nullable.kth.id1212.hangman.proto.{AsyncPacketReader, AsyncPacketWriter, Packet}
 
 class Connection(packetListener: Packet => Unit) {
-  private var socket: SocketChannel = SocketChannel.open()
   private var thread: Option[ConnectionThread] = None
 
   def start(host: String, port: String): Unit = {
     stop()
-    socket = SocketChannel.open()
+    val socket = SocketChannel.open()
     socket.connect(new InetSocketAddress(host, port.toInt))
     socket.configureBlocking(false)
     val t = new ConnectionThread(socket, packetListener)
